@@ -16,7 +16,20 @@ const app = express();
 // En Vercel Services el routePrefix /api ya lo maneja el router; localmente usamos /api
 const API_PREFIX = process.env.VERCEL ? '' : '/api';
 
-const allowedOrigins = env.CORS_ORIGIN.split(',').map((o) => o.trim());
+function getAllowedOrigins(): string[] {
+  const origins = env.CORS_ORIGIN.split(',').map((o) => o.trim()).filter(Boolean);
+
+  if (process.env.VERCEL_URL) {
+    origins.push(`https://${process.env.VERCEL_URL}`);
+  }
+  if (process.env.VERCEL_BRANCH_URL) {
+    origins.push(`https://${process.env.VERCEL_BRANCH_URL}`);
+  }
+
+  return [...new Set(origins)];
+}
+
+const allowedOrigins = getAllowedOrigins();
 
 app.use(
   cors({
