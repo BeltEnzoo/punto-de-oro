@@ -1,5 +1,9 @@
 node_modules/
 dist/
+backend/index.js
+backend/index.js.map
+backend/index.d.ts
+backend/index.d.ts.map
 .env
 .env.local
 *.log
