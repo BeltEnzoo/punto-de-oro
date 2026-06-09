@@ -34,11 +34,20 @@ const allowedOrigins = getAllowedOrigins();
 app.use(
   cors({
     origin: (origin, callback) => {
-      if (!origin || allowedOrigins.includes(origin)) {
+      if (!origin) {
         callback(null, true);
-      } else {
-        callback(new Error('No permitido por CORS'));
+        return;
       }
+      if (allowedOrigins.includes(origin)) {
+        callback(null, true);
+        return;
+      }
+      // Aceptar cualquier preview/producción de Vercel (*.vercel.app)
+      if (process.env.VERCEL && /\.vercel\.app$/.test(new URL(origin).hostname)) {
+        callback(null, true);
+        return;
+      }
+      callback(new Error('No permitido por CORS'));
     },
     credentials: true,
   })
