@@ -1,0 +1,116 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Rol {
+  ADMIN
+  PROFESOR
+}
+
+enum EstadoAlumno {
+  ACTIVO
+  INACTIVO
+}
+
+enum EstadoCuota {
+  PAGADA
+  PENDIENTE
+  VENCIDA
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String
+  nombre    String
+  apellido  String
+  rol       Rol      @default(PROFESOR)
+  activo    Boolean  @default(true)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("users")
+}
+
+model Alumno {
+  id               String        @id @default(uuid())
+  nombre           String
+  apellido         String
+  dni              String        @unique
+  telefono         String?
+  direccion        String?
+  fechaNacimiento  DateTime      @map("fecha_nacimiento")
+  fechaInscripcion DateTime      @default(now()) @map("fecha_inscripcion")
+  estado           EstadoAlumno  @default(ACTIVO)
+  observaciones    String?
+  createdAt        DateTime      @default(now()) @map("created_at")
+  updatedAt        DateTime      @updatedAt @map("updated_at")
+
+  horarios    AlumnoHorario[]
+  asistencias Asistencia[]
+  cuotas      Cuota[]
+
+  @@map("alumnos")
+}
+
+model Horario {
+  id           String   @id @default(uuid())
+  nombreHorario String  @map("nombre_horario")
+  horaInicio   String   @map("hora_inicio")
+  horaFin      String   @map("hora_fin")
+  cupoMaximo   Int      @map("cupo_maximo")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  alumnos     AlumnoHorario[]
+  asistencias Asistencia[]
+
+  @@map("horarios")
+}
+
+model AlumnoHorario {
+  id        String   @id @default(uuid())
+  alumnoId  String   @map("alumno_id")
+  horarioId String   @map("horario_id")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  alumno  Alumno  @relation(fields: [alumnoId], references: [id], onDelete: Cascade)
+  horario Horario @relation(fields: [horarioId], references: [id], onDelete: Cascade)
+
+  @@unique([alumnoId, horarioId])
+  @@map("alumno_horario")
+}
+
+model Asistencia {
+  id          String   @id @default(uuid())
+  alumnoId    String   @map("alumno_id")
+  horarioId   String   @map("horario_id")
+  fecha       DateTime @db.Date
+  horaIngreso String   @map("hora_ingreso")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  alumno  Alumno  @relation(fields: [alumnoId], references: [id], onDelete: Cascade)
+  horario Horario @relation(fields: [horarioId], references: [id], onDelete: Cascade)
+
+  @@unique([alumnoId, horarioId, fecha])
+  @@map("asistencias")
+}
+
+model Cuota {
+  id               String      @id @default(uuid())
+  alumnoId         String      @map("alumno_id")
+  fechaVencimiento DateTime    @map("fecha_vencimiento") @db.Date
+  importe          Decimal     @db.Decimal(10, 2)
+  estado           EstadoCuota @default(PENDIENTE)
+  createdAt        DateTime    @default(now()) @map("created_at")
+  updatedAt        DateTime    @updatedAt @map("updated_at")
+
+  alumno Alumno @relation(fields: [alumnoId], references: [id], onDelete: Cascade)
+
+  @@map("cuotas")
+}
