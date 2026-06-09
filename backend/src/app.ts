@@ -13,21 +13,37 @@ import reportesRoutes from './modules/reportes/reportes.routes.js';
 
 const app = express();
 
-app.use(cors({ origin: env.CORS_ORIGIN, credentials: true }));
+// En Vercel Services el routePrefix /api ya lo maneja el router; localmente usamos /api
+const API_PREFIX = process.env.VERCEL ? '' : '/api';
+
+const allowedOrigins = env.CORS_ORIGIN.split(',').map((o) => o.trim());
+
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error('No permitido por CORS'));
+      }
+    },
+    credentials: true,
+  })
+);
 app.use(express.json());
 
-app.get('/api/health', (_req, res) => {
+app.get(`${API_PREFIX}/health`, (_req, res) => {
   res.json({ status: 'ok', service: 'Punto de Oro API' });
 });
 
-app.use('/api/auth', authRoutes);
-app.use('/api/dashboard', dashboardRoutes);
-app.use('/api/alumnos', alumnosRoutes);
-app.use('/api/horarios', horariosRoutes);
-app.use('/api/inscripciones', inscripcionesRoutes);
-app.use('/api/asistencias', asistenciasRoutes);
-app.use('/api/cuotas', cuotasRoutes);
-app.use('/api/reportes', reportesRoutes);
+app.use(`${API_PREFIX}/auth`, authRoutes);
+app.use(`${API_PREFIX}/dashboard`, dashboardRoutes);
+app.use(`${API_PREFIX}/alumnos`, alumnosRoutes);
+app.use(`${API_PREFIX}/horarios`, horariosRoutes);
+app.use(`${API_PREFIX}/inscripciones`, inscripcionesRoutes);
+app.use(`${API_PREFIX}/asistencias`, asistenciasRoutes);
+app.use(`${API_PREFIX}/cuotas`, cuotasRoutes);
+app.use(`${API_PREFIX}/reportes`, reportesRoutes);
 
 app.use(errorHandler);
 
